@@ -62,7 +62,7 @@ def warp(img):
 
 def preprocess_img(img):
 
-    cropped_image = img
+    cropped_image = np.copy(img)
 
     height = cropped_image.shape[0]
     width = cropped_image.shape[1]
