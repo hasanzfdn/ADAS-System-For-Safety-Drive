@@ -1,0 +1,10 @@
+<launch>
+
+    <!-- ROS-Bridge node for Simulator connection
+    <node name="websocket_bridge" pkg="rosbridge_server" type="rosbridge_websocket" output="screen" clear_params="true" required="true" /> -->
+
+    <node name="republish" pkg="image_transport" type="republish" args="compressed in:=/simulator/camera_node/image raw out:=/simulator/middle_camera"/>
+
+    <node name="image_subscriber" pkg="adas_safety_drive" type="findwaypoints.py" output="screen" />
+
+</launch>
