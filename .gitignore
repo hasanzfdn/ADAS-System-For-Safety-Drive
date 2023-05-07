@@ -8,3 +8,5 @@ devel/
 .catkin_workspace
 
 src/CMakeLists.txt
+
+src/adas_safety_drive/CMakeLists.txt
