@@ -2,13 +2,15 @@ import line_detection_with_opencv
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from sensor_msgs.msg import CompressedImage
+import rospy
 import matplotlib.image as mpimg
 
 
 
 def find_lane_pixels(binary_warped):
     # Take a histogram of the bottom half of the image
-    histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
+    histogram = np.sum(binary_warped[binary_warped.shape[0]//2:, :], axis=0)
     # Create an output image to draw on and visualize the result
     out_img = np.dstack((binary_warped, binary_warped, binary_warped))
     # Find the peak of the left and right halves of the histogram
@@ -48,27 +50,27 @@ def find_lane_pixels(binary_warped):
         win_xleft_high = leftx_current + margin
         win_xright_low = rightx_current - margin
         win_xright_high = rightx_current + margin
-        
+
         # Draw the windows on the visualization image
         cv2.rectangle(out_img,(win_xleft_low,win_y_low),
-        (win_xleft_high,win_y_high),(0,255,0), 2) 
+        (win_xleft_high,win_y_high),(0,255,0), 2)
         cv2.rectangle(out_img,(win_xright_low,win_y_low),
-        (win_xright_high,win_y_high),(0,255,0), 2) 
-        
+        (win_xright_high,win_y_high),(0,255,0), 2)
+
         # Identify the nonzero pixels in x and y within the window #
-        good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & 
+        good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) &
         (nonzerox >= win_xleft_low) &  (nonzerox < win_xleft_high)).nonzero()[0]
-        good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & 
+        good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) &
         (nonzerox >= win_xright_low) &  (nonzerox < win_xright_high)).nonzero()[0]
-        
+
         # Append these indices to the lists
         left_lane_inds.append(good_left_inds)
         right_lane_inds.append(good_right_inds)
-        
+
         # If you found > minpix pixels, recenter next window on their mean position
         if len(good_left_inds) > minpix:
             leftx_current = np.int64(np.mean(nonzerox[good_left_inds]))
-        if len(good_right_inds) > minpix:        
+        if len(good_right_inds) > minpix:
             rightx_current = np.int64(np.mean(nonzerox[good_right_inds]))
 
     # Concatenate the arrays of indices (previously was a list of lists of pixels)
@@ -81,7 +83,7 @@ def find_lane_pixels(binary_warped):
 
     # Extract left and right line pixel positions
     leftx = nonzerox[left_lane_inds]
-    lefty = nonzeroy[left_lane_inds] 
+    lefty = nonzeroy[left_lane_inds]
     rightx = nonzerox[right_lane_inds]
     righty = nonzeroy[right_lane_inds]
 
@@ -108,7 +110,7 @@ def fit_polynomial(binary_warped):
             print('The function failed to fit a line!')
             left_fitx = 1*ploty**2 + 1*ploty
             right_fitx = 1*ploty**2 + 1*ploty
-         
+
 
     ## Visualization ##
     # Colors in the left and right lane regions
@@ -118,38 +120,55 @@ def fit_polynomial(binary_warped):
     # Plots the left and right polynomials on the lane lines
         plt.plot(left_fitx, ploty, color='cyan')
         plt.plot(right_fitx, ploty, color='yellow')
-    
 
-    
+
+
         mid_left = (binary_warped.shape[1] // 2.0) - (binary_warped.shape[1]*0.04)
         mid_right = (binary_warped.shape[1] // 2.0) + (binary_warped.shape[1]*0.04)
- 
+
         lane_alert = False
 
-    
+
         if all(x > mid_left for x in leftx):
 
-            print ("misses the road in the left lane")
-            lane_alert = True 
+            print("misses the road in the left lane")
+            lane_alert = True
 
         if all(x < mid_right for x in rightx):
 
-            print ("misses the road in the right lane")
-            lane_alert = True 
+            print("misses the road in the right lane")
+            lane_alert = True
 
     except:
         lane_alert = False
-        
+
 
 
     return out_img, lane_alert
 
-def polyfit(img):
-    
-    binary_image = line_detection_with_opencv.canny(img)
+def polyfit(data,image_pub):
+
+    binary_image = line_detection_with_opencv.canny(data)
     out_img = fit_polynomial(binary_image)
 
-    return out_img
+    image_pub.publish(out_img)
+
+def cameraInfoListener():
+
+    rospy.init_node('image_subscriber', anonymous=False)
+    rospy.loginfo('Waiting for topic %s to be published..','/simulator/camera_node/image/compressed')
+    rospy.wait_for_message('/simulator/camera_node/image/compressed',CompressedImage)
+    rospy.loginfo('%s topic is now available!','/simulator/camera_node/image/compressed')
+
+
+
+    image_publisher = rospy.Publisher('image_topic', CompressedImage, queue_size = 10)
+    rospy.Subscriber('simulator/middle_camera/image/compressed', CompressedImage, polyfit, image_publisher)
+
+
+
+if __name__ == '__main__':
+    cameraInfoListener()
 
 
 

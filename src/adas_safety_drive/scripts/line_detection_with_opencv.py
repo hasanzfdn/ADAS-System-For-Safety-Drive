@@ -1,5 +1,4 @@
-""" Created on Monday July 5 15:24:11 2020
-
+"""
 @author E-mail = hasan.ozfidan@std.yildiz.edu.tr
 
 """
@@ -104,7 +103,7 @@ def firstzonecut(img, mercedes_dif=0):
                  [width // 6 + mercedes_dif, height],
                  [5 * (width // 6) + mercedes_dif, height],
                  [5 * (width // 6)-50  + mercedes_dif, (height // 11) * 10],
-                 [(width // 6)+50 + mercedes_dif, (height // 11) * 10]	#sol_ust
+                 [(width // 6)+50 + mercedes_dif, (height // 11) * 10]  #sol_ust
             ]
         ], dtype=np.int32
     )
@@ -229,7 +228,7 @@ def canny(image, mercedes_dif=0):
     org_mercedes = mercedes_dif
     mercedes_dif *= 1
     cut_image = preprocess_img(image)
-   # cut_image = increase_brightness(cut_image, value=90) #if the image is very dark you can use this line for bright image
+   # cut_image = increase_brightness(cut_image, value=90)            #if the image is very dark you can use this line for bright image
     blur_gray = blur(cut_image)
     edges = regional_canny(blur_gray)
     firstzone = firstzonecut(edges, mercedes_dif)
