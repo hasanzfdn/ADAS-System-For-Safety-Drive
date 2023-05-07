@@ -1,9 +1,13 @@
+#!/usr/bin/env python3
+
 import line_detection_with_opencv
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import Image
 import rospy
+from cv_bridge import CvBridge
+from std_msgs.msg import Bool
 import matplotlib.image as mpimg
 
 
@@ -144,26 +148,32 @@ def fit_polynomial(binary_warped):
 
 
 
-    return out_img, lane_alert
+    return lane_alert
 
 def polyfit(data,image_pub):
 
-    binary_image = line_detection_with_opencv.canny(data)
-    out_img = fit_polynomial(binary_image)
+    bridge = CvBridge()
+    cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
+    binary_image = line_detection_with_opencv.canny(cv_image)
 
-    image_pub.publish(out_img)
+    lane_alert_publisher = rospy.Publisher('lane_alert', Bool, queue_size = 1)
+    lane_alert = fit_polynomial(binary_image)
+    lane_alert_publisher.publish(lane_alert)
+
+    image_message = bridge.cv2_to_imgmsg(binary_image, encoding="passthrough")
+    image_pub.publish(image_message)
 
 def cameraInfoListener():
 
     rospy.init_node('image_subscriber', anonymous=False)
     rospy.loginfo('Waiting for topic %s to be published..','/simulator/camera_node/image/compressed')
-    rospy.wait_for_message('/simulator/camera_node/image/compressed',CompressedImage)
+    rospy.wait_for_message('/simulator/middle_camera',Image)
     rospy.loginfo('%s topic is now available!','/simulator/camera_node/image/compressed')
 
 
-
-    image_publisher = rospy.Publisher('image_topic', CompressedImage, queue_size = 10)
-    rospy.Subscriber('simulator/middle_camera/image/compressed', CompressedImage, polyfit, image_publisher)
+    image_publisher = rospy.Publisher('image_topic', Image, queue_size = 10)
+    rospy.Subscriber('/simulator/middle_camera', Image, polyfit, image_publisher)
+    rospy.spin()
 
 
 
