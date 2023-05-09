@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+
 """
 Created on Thu Mar 30 18:41:57 2023
 
@@ -14,28 +15,16 @@ import dlib
 # face_utils for basic operations of conversion
 from imutils import face_utils
 import time
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
+import rospy
+from std_msgs.msg import Bool
+
 
 # Initializing the camera and taking the instance
-cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(0)
 
-# Initializing the face detector and landmark detector
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
-# status marking for current state
-sleep = 0
-drowsy = 0
-active = 0
-status = ""
-color = (0, 0, 0)
-Alarm  =False
-# time variables
-start_time = time.time()
-prev_time = start_time
-
-# loop variables
-frame_count = 0
-output_count = 0
 def compute(ptA, ptB):
     dist = np.linalg.norm(ptA - ptB)
     return dist
@@ -64,9 +53,41 @@ def blinkedright(a, b, c, d, e, f):
     #   return 1
     else:
         return 0
-# loop until 1 minute
-while time.time() - start_time <= 60:
-    ret, frame = cap.read()
+
+
+
+
+
+# time variables
+start_time = time.time()
+prev_time = start_time
+
+def detect_face(data):
+    sstart_time = time.time()
+    pprev_time = sstart_time
+
+    bridge = CvBridge()
+    cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
+
+    # Initializing the face detector and landmark detector
+    detector = dlib.get_frontal_face_detector()
+    # GIVE PATH YOUR WEIGHTS
+    predictor = dlib.shape_predictor("/home/hasan/Desktop/bitirme/ADAS-System-For-Safety-Drive/src/adas_safety_drive/weights/shape_predictor_68_face_landmarks.dat")
+
+
+    # loop until 1 minute
+    frame_count = 0
+    active = 0
+
+    # status marking for current state
+    sleep = 0
+    drowsy = 0
+    status = ""
+    color = (0, 0, 0)
+    face_alert  =False
+
+    frame = cv_image
+    ret = True
     if ret == True:
         frame_count += 1
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -102,24 +123,61 @@ while time.time() - start_time <= 60:
                 active += 1
 
             # print status every 2 seconds
-            if time.time() - prev_time >= 2:
-                prev_time = time.time()
+            if time.time() - pprev_time >= 2:
+                pprev_time = time.time()
                 sleep_count = sleep
                 drowsy_count = drowsy
                 active_count = active
                 total_count = sleep_count + drowsy_count + active_count
                 Rate = sleep_count/total_count
 
+                rospy.loginfo('hasannnnn..')
+
                 print("Sleep:", sleep_count )
                 print("Drowsy:", drowsy_count)
                 print("Active:", active)
                 print("Total:", total_count)
-                if (Rate >= 0.25 ):
+                if (Rate >= 0.25):
                     print("Rate of Sleepy:",Rate)
-                    Alarm = True
+                    face_alert = True
                 else :
-                    Alarm = False
+                    face_alert = False
+
+                cv2.putText(frame, status, (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color, 3)
+
+                for n in range(0, 68):
+                    (x, y) = landmarks[n]
+                    cv2.circle(frame, (x, y), 1, (255, 255, 255), -1)
+            else:
+                break
+
+    #        cv2.imshow("Result of detector", frame)
+    #       cv2.waitKey(1)
+    sleep_status_publisher = rospy.Publisher('face_alert', Bool, queue_size = 1)
+    sleep_status_publisher.publish(face_alert)
 
 
-cap.release()
-cv2.destroyAllWindows()
+
+
+
+
+
+def FaceCameraListener():
+    rospy.init_node('image_subscriber', anonymous=False)
+
+    while time.time() - start_time <= 60:
+
+        rospy.loginfo('Waiting for face camera topic %s to be published..','/usb_cam/image_raw')
+        rospy.wait_for_message('/usb_cam/image_raw', Image)
+        rospy.loginfo('%s  topic is now available for face camera!','/usb_cam/image_raw')
+
+        rospy.Subscriber('/usb_cam/image_raw', Image, detect_face)
+
+
+    rospy.spin()
+
+
+if __name__ == '__main__':
+    FaceCameraListener()
+
+
