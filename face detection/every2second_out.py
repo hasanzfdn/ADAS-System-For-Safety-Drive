@@ -28,7 +28,7 @@ drowsy = 0
 active = 0
 status = ""
 color = (0, 0, 0)
-
+Alarm  =False
 # time variables
 start_time = time.time()
 prev_time = start_time
@@ -116,20 +116,10 @@ while time.time() - start_time <= 60:
                 print("Total:", total_count)
                 if (Rate >= 0.25 ):
                     print("Rate of Sleepy:",Rate)
-                    
-                
-                cv2.putText(frame, status, (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color, 3)
-                
-                for n in range(0, 68):
-                    (x, y) = landmarks[n]
-                    cv2.circle(frame, (x, y), 1, (255, 255, 255), -1)
-                cv2.imshow("Result of detector", frame)
-                key = cv2.waitKey()
-                if key == 0:
-                    break
+                    Alarm = True
+                else :
+                    Alarm = False
+              
         
-            else:
-                break
-            
 cap.release()
 cv2.destroyAllWindows()
