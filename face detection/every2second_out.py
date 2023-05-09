@@ -14,7 +14,6 @@ import dlib
 # face_utils for basic operations of conversion
 from imutils import face_utils
 import time
-import psutil
 
 # Initializing the camera and taking the instance
 cap = cv2.VideoCapture(0)
@@ -50,7 +49,7 @@ def blinkedleft(a, b, c, d, e, f):
     if (ratio > 0.18):
         return 2
     #elif (ratio > 0.21 and ratio <= 0.25):
-        #return 1
+     #   return 1
     else:
         return 0
 def blinkedright(a, b, c, d, e, f):
@@ -62,13 +61,11 @@ def blinkedright(a, b, c, d, e, f):
     if (ratio > 0.18):
         return 2
     #elif (ratio > 0.21 and ratio <= 0.25):
-        #return 1
+     #   return 1
     else:
         return 0
 # loop until 1 minute
 while time.time() - start_time <= 60:
-  #  print('RAM memory % used:', psutil.virtual_memory()[2])
-
     ret, frame = cap.read()
     if ret == True:
         frame_count += 1
@@ -99,34 +96,40 @@ while time.time() - start_time <= 60:
                 sleep += 1
             elif (left_blink == 2 and right_blink == 0):
                 drowsy += 1
-            elif (right_blink == 2 and left_blink == 0):
+            elif (right_blink == 0 and left_blink == 2):
                 drowsy += 1
             elif (left_blink == 2 and right_blink == 2):
                 active += 1
 
             # print status every 2 seconds
-            if time.time() - prev_time >= 0.5:
+            if time.time() - prev_time >= 2:
                 prev_time = time.time()
                 sleep_count = sleep 
                 drowsy_count = drowsy 
                 active_count = active 
                 total_count = sleep_count + drowsy_count + active_count
-                print("Sleep:", sleep_count)
+                Rate = sleep_count/total_count
+                
+                print("Sleep:", sleep_count )
                 print("Drowsy:", drowsy_count)
                 print("Active:", active)
                 print("Total:", total_count)
+                if (Rate >= 0.25 ):
+                    print("Rate of Sleepy:",Rate)
+                    
+                
                 cv2.putText(frame, status, (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color, 3)
                 
                 for n in range(0, 68):
                     (x, y) = landmarks[n]
                     cv2.circle(frame, (x, y), 1, (255, 255, 255), -1)
+                cv2.imshow("Result of detector", frame)
+                key = cv2.waitKey()
+                if key == 0:
+                    break
+        
             else:
                 break
-         
-                # cv2.imshow("Frame", frame)
-            cv2.imshow("Result of detector", frame)
-            cv2.waitKey(1)
-                
             
 cap.release()
 cv2.destroyAllWindows()
