@@ -61,34 +61,38 @@ def blinkedright(a, b, c, d, e, f):
 # time variables
 start_time = time.time()
 prev_time = start_time
+# Initializing the face detector and landmark detector
+detector = dlib.get_frontal_face_detector()
+# GIVE PATH YOUR WEIGHTS
+predictor = dlib.shape_predictor("/home/hasan/Desktop/bitirme/ADAS-System-For-Safety-Drive/src/adas_safety_drive/weights/shape_predictor_68_face_landmarks.dat")
+
+
+# loop until 1 minute
+frame_count = 0
+active = 0
+
+# status marking for current state
+sleep = 0
+drowsy = 0
+status = ""
+color = (0, 0, 0)
+face_alert  = False
+
+sleep_status_publisher = rospy.Publisher('face_alert', Bool, queue_size = 1)
 
 def detect_face(data):
-    sstart_time = time.time()
-    pprev_time = sstart_time
+    global start_time , active ,sleep , drowsy, prev_time, frame_count , face_alert
 
     bridge = CvBridge()
     cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
 
-    # Initializing the face detector and landmark detector
-    detector = dlib.get_frontal_face_detector()
-    # GIVE PATH YOUR WEIGHTS
-    predictor = dlib.shape_predictor("/home/hasan/Desktop/bitirme/ADAS-System-For-Safety-Drive/src/adas_safety_drive/weights/shape_predictor_68_face_landmarks.dat")
 
-
-    # loop until 1 minute
-    frame_count = 0
-    active = 0
-
-    # status marking for current state
-    sleep = 0
-    drowsy = 0
-    status = ""
-    color = (0, 0, 0)
-    face_alert  =False
 
     frame = cv_image
     ret = True
     if ret == True:
+
+
         frame_count += 1
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -123,21 +127,19 @@ def detect_face(data):
                 active += 1
 
             # print status every 2 seconds
-            if time.time() - pprev_time >= 2:
-                pprev_time = time.time()
+            if time.time() - prev_time >= 2:
+                prev_time = time.time()
                 sleep_count = sleep
                 drowsy_count = drowsy
                 active_count = active
                 total_count = sleep_count + drowsy_count + active_count
                 Rate = sleep_count/total_count
 
-                rospy.loginfo('hasannnnn..')
-
                 print("Sleep:", sleep_count )
                 print("Drowsy:", drowsy_count)
                 print("Active:", active)
                 print("Total:", total_count)
-                if (Rate >= 0.25):
+                if (Rate >= 0.25 ):
                     print("Rate of Sleepy:",Rate)
                     face_alert = True
                 else :
@@ -153,25 +155,27 @@ def detect_face(data):
 
     #        cv2.imshow("Result of detector", frame)
     #       cv2.waitKey(1)
-    sleep_status_publisher = rospy.Publisher('face_alert', Bool, queue_size = 1)
-    sleep_status_publisher.publish(face_alert)
 
+    if time.time() - start_time > 10:
+        frame_count = 0
+        active = 0
 
+        # status marking for current state
+        sleep = 0
+        drowsy = 0
 
-
-
-
+        sleep_status_publisher.publish(face_alert)
+        start_time = time.time()
 
 def FaceCameraListener():
+
     rospy.init_node('image_subscriber', anonymous=False)
 
-    while time.time() - start_time <= 60:
+    rospy.loginfo('Waiting for face camera topic %s to be published..','/usb_cam/image_raw')
+    rospy.wait_for_message('/usb_cam/image_raw', Image)
+    rospy.loginfo('%s  topic is now available for face camera!','/usb_cam/image_raw')
 
-        rospy.loginfo('Waiting for face camera topic %s to be published..','/usb_cam/image_raw')
-        rospy.wait_for_message('/usb_cam/image_raw', Image)
-        rospy.loginfo('%s  topic is now available for face camera!','/usb_cam/image_raw')
-
-        rospy.Subscriber('/usb_cam/image_raw', Image, detect_face)
+    rospy.Subscriber('/usb_cam/image_raw', Image, detect_face)
 
 
     rospy.spin()
