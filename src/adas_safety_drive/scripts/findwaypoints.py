@@ -167,15 +167,15 @@ def cameraInfoListener():
 
     rospy.init_node('image_subscriber', anonymous=False)
     rospy.loginfo('Waiting for topic %s to be published..','/simulator/camera_node/image/compressed')
-    rospy.wait_for_message('/simulator/middle_camera',Image)
+    rospy.wait_for_message('/usb_cam_e_con/image_raw',Image)
     rospy.loginfo('%s topic is now available!','/simulator/camera_node/image/compressed')
 
 
     image_publisher = rospy.Publisher('image_topic', Image, queue_size = 10)
-    rospy.Subscriber('/simulator/middle_camera', Image, polyfit, image_publisher)
+    rospy.Subscriber('/usb_cam_e_con/image_raw', Image, polyfit, image_publisher)
     rospy.spin()
 
-
+    #/simulator/middle_camera  //for simulation
 
 if __name__ == '__main__':
     cameraInfoListener()

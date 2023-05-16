@@ -172,10 +172,10 @@ def FaceCameraListener():
     rospy.init_node('image_subscriber', anonymous=False)
 
     rospy.loginfo('Waiting for face camera topic %s to be published..','/usb_cam/image_raw')
-    rospy.wait_for_message('/usb_cam/image_raw', Image)
+    rospy.wait_for_message('/usb_cam_webcam/image_raw', Image)
     rospy.loginfo('%s  topic is now available for face camera!','/usb_cam/image_raw')
 
-    rospy.Subscriber('/usb_cam/image_raw', Image, detect_face)
+    rospy.Subscriber('/usb_cam_webcam/image_raw', Image, detect_face)
 
 
     rospy.spin()

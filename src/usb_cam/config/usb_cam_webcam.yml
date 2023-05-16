@@ -10,7 +10,7 @@ pixel_format: yuyv                  # Pixel format for Video4linux device (also 
                                         # https://wiki.videolan.org/YUV#YUV_4:2:0_.28I420.2FJ420.2FYV12.29
                                         # - yuyv - YUV420
                                         # - yuv - synonym for yuyv
-                                        # - uyvy - UVY240
+                                        # - uyvy - UVY240   for e-con
                                         # - yuvmono10 - Monochrome 10-bit pseudo-YUV
                                         # - rgb24 - Linear 8-bit RGB
                                         # - bgr24 - OpenCV-compatible 8-bit BGR

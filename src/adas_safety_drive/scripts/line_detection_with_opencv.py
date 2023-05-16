@@ -246,7 +246,7 @@ def canny(image, mercedes_dif=0):
 
  
     # Calling psutil.cpu_precent() for 4 seconds
-    print('RAM memory % used:', psutil.virtual_memory()[2])
+    #print('RAM memory % used:', psutil.virtual_memory()[2])
    
 
     return warped_final
