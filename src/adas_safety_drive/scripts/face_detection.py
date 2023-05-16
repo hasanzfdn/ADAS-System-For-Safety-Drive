@@ -21,8 +21,6 @@ import rospy
 from std_msgs.msg import Bool
 
 
-# Initializing the camera and taking the instance
-#cap = cv2.VideoCapture(0)
 
 
 def compute(ptA, ptB):
@@ -79,7 +77,7 @@ color = (0, 0, 0)
 face_alert  = False
 
 sleep_status_publisher = rospy.Publisher('face_alert', Bool, queue_size = 1)
-
+face_pub = rospy.Publisher('face_image', Image, queue_size = 10)
 def detect_face(data):
     global start_time , active ,sleep , drowsy, prev_time, frame_count , face_alert
 
@@ -155,6 +153,8 @@ def detect_face(data):
 
     #        cv2.imshow("Result of detector", frame)
     #       cv2.waitKey(1)
+    image_message = bridge.cv2_to_imgmsg(frame, encoding="passthrough")
+    face_pub.publish(image_message)
 
     if time.time() - start_time > 10:
         frame_count = 0
