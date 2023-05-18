@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 
 import line_detection_with_opencv
 import cv2
@@ -93,8 +94,14 @@ def find_lane_pixels(binary_warped):
 
     return leftx, lefty, rightx, righty, out_img
 
+out_lane = 0
+in_lane = 0
+alert = False
+start_time = time.time()
+lane_alert_publisher = rospy.Publisher('lane_alert', Bool, queue_size = 1)
 
 def fit_polynomial(binary_warped):
+    global out_lane, in_lane, alert, start_time
     # Find our lane pixels first
     leftx, lefty, rightx, righty, out_img = find_lane_pixels(binary_warped)
 
@@ -132,7 +139,6 @@ def fit_polynomial(binary_warped):
 
         lane_alert = False
 
-
         if all(x > mid_left for x in leftx):
 
             print("misses the road in the left lane")
@@ -147,18 +153,38 @@ def fit_polynomial(binary_warped):
         lane_alert = False
 
 
+#check in line or out line
+    if (lane_alert == False):
+        in_lane = in_lane + 1
 
-    return lane_alert
+    else:
+        out_lane = out_lane + 1
+
+    rate = out_lane / in_lane
+
+    if rate >= 0.1:
+        print("Rate of line:",rate)
+        alert = True
+    else:
+#        print("Rate of line:",rate)
+
+        alert = False
+
+    # if 10 seconds time period finish
+    if time.time() - start_time > 10:
+
+        lane_alert_publisher.publish(alert)
+        start_time = time.time()
+        out_lane = 0
+        in_lane = 0
+
 
 def polyfit(data,image_pub):
 
     bridge = CvBridge()
     cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
     binary_image = line_detection_with_opencv.canny(cv_image)
-
-    lane_alert_publisher = rospy.Publisher('lane_alert', Bool, queue_size = 1)
-    lane_alert = fit_polynomial(binary_image)
-    lane_alert_publisher.publish(lane_alert)
+    fit_polynomial(binary_image)
 
     image_message = bridge.cv2_to_imgmsg(binary_image, encoding="passthrough")
     image_pub.publish(image_message)
