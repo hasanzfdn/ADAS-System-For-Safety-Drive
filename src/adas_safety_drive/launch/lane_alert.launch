@@ -5,9 +5,12 @@
 
     <node name="republish" pkg="image_transport" type="republish" args="compressed in:=/simulator/camera_node/image raw out:=/simulator/middle_camera"/>
 
-    <node name="image_subscriber_lane" pkg="adas_safety_drive" type="findwaypoints.py" output="screen" />
+    <node name="image_subscriber_lane" pkg="adas_safety_drive" type="findwaypoints.py"  />
 
     <node name="image_subscriber_face" pkg="adas_safety_drive" type="face_detection.py" output="screen" />
+
+    <node name="decision_maker" pkg="adas_safety_drive" type="decision_maker.py" output="screen" />
+
 
 
 </launch>
