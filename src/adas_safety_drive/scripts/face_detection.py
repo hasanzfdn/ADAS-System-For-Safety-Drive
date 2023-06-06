@@ -156,7 +156,7 @@ def detect_face(data):
     image_message = bridge.cv2_to_imgmsg(frame, encoding="passthrough")
     face_pub.publish(image_message)
 
-    if time.time() - start_time > 10:
+    if time.time() - start_time > 2:
         frame_count = 0
         active = 0
 

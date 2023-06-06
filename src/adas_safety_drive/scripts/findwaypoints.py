@@ -162,7 +162,7 @@ def fit_polynomial(binary_warped):
 
     rate = out_lane / in_lane
 
-    if rate >= 0.1:
+    if rate >= 0.05:
         print("Rate of line:",rate)
         alert = True
     else:
@@ -171,7 +171,7 @@ def fit_polynomial(binary_warped):
         alert = False
 
     # if 10 seconds time period finish
-    if time.time() - start_time > 10:
+    if time.time() - start_time > 2:
 
         lane_alert_publisher.publish(alert)
         start_time = time.time()
