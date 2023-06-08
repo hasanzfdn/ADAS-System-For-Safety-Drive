@@ -5,7 +5,8 @@ from std_msgs.msg import Bool
 from std_msgs.msg import String
 import message_filters
 import send_e_mail
-
+from sensor_msgs.msg import Image
+import cv2
 
 
 sleep_publisher = rospy.Publisher('sleep_warning', String, queue_size = 1)
@@ -21,12 +22,12 @@ msg = String()
 msg.data = 'PLEASE TAKE A COFFEE BREAK FOR YOUR HEALTH'
 
 def face(data):
-    global face_cnt, face_alert
+    global face_alert
     face_alert = False
 
     # 10 sn'de bir uyku verisi geliyor.
     # 20 sn' içerisinde üst üste iki veri de uykulu olursa uyarı ver.
-
+    """
     if (data == False):
         face_cnt = 0
 
@@ -38,18 +39,25 @@ def face(data):
         if (face_cnt == 2):
             face_alert = True
             face_cnt = 0
+    """
+    if (data == True):
+        face_alert = True
+    else:
+        face_alert = False
 
     return face_alert
 
 
 
 def lane(data):
-    global lane_cnt, lane_alert
+#    global lane_cnt, lane_alert
+    global lane_alert
     lane_alert = False
 
     # 10 sn'de bir lane verisi geliyor.
     # 20 sn' içerisinde üst üste iki veri de sıkıntılı olursa uyarı ver.
 
+    '''
     if (data == False):
         lane_cnt = 0
 
@@ -62,6 +70,13 @@ def lane(data):
         if (lane_cnt == 2):
             lane_alert = True
             lane_cnt = 0
+    '''
+
+    if (data == True):
+        lane_alert = True
+    else:
+        lane_alert = False
+
 
     return lane_alert
 
@@ -70,25 +85,36 @@ def callback(face_sub, lane_sub):
     health_warning = False
     flag1 = face(face_sub.data)
     flag2 = lane(lane_sub.data)
+    print("callback")
 
+    cap = cv2.VideoCapture("/dev/video0")
+    success, img= cap.read()
+    cv2.imshow("Result of detector", img)
+    cv2.waitKey(1)
     if flag1 == True:
         if flag2 == True:
             health_warning = True
+            print("first if")
             health_warning_pub.publish(health_warning)
             send_e_mail.send_mail()
 
+
         else:
+            print("first false")
+
             health_warning_pub.publish(health_warning)
     else:
         health_warning_pub.publish(health_warning)
 
     if flag2 == True:
         if flag1 == True:
+            print("second if")
             health_warning = True
             health_warning_pub.publish(health_warning)
             send_e_mail.send_mail()
 
         else:
+            print("second false")
             health_warning_pub.publish(health_warning)
 
     else:
@@ -103,8 +129,9 @@ def decision_publisher():
     face_sub = message_filters.Subscriber('/face_alert', Bool)
     lane_sub = message_filters.Subscriber('/lane_alert', Bool)
 
-    ts = message_filters.ApproximateTimeSynchronizer([face_sub, lane_sub], 10, 0.2, allow_headerless=True)
+    ts = message_filters.ApproximateTimeSynchronizer([face_sub, lane_sub], 10, 1, allow_headerless=True)
     ts.registerCallback(callback)
+
 
     rospy.spin()
 

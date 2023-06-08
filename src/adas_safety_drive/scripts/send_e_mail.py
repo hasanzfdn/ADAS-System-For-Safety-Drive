@@ -16,7 +16,7 @@ def send_mail():
 
         mesaj = MIMEMultipart()
         mesaj["From"] = "hsnzfdn@gmail.com"           # Gönderen
-        mesaj["To"] = " Eriskaan@outlook.com"          # Alıcı
+        mesaj["To"] = " hasanozfidan0@gmail.com"          # Alıcı
         mesaj["Subject"] = "ADAS Alarm"    # Konusu
 
         body = """
@@ -34,4 +34,3 @@ def send_mail():
     except Exception as e:
         print('HATA')
 
-send_mail()
